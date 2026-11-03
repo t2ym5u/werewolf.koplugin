@@ -32,8 +32,10 @@ local T               = require("ffi/util").template
 
 local MenuHelper = require("menu_helper")
 local ScreenBase = require("screen_base")
+local SeenHistory = require("seen_history")
 
 local Game = lrequire("game")
+local Narration = lrequire("narration")
 
 local DeviceScreen = Device.screen
 
@@ -303,31 +305,48 @@ function WerewolfScreen:_c()
         for _i, k in ipairs({ "roles", "teams", "log", "causes", "win_title", "titles", "marks" }) do
             c[k] = base[k]
         end
-        self._content, self._content_key = c, key
+        -- A theme's list -> the classic list for the same step, read once the
+        -- theme's own lines have all been used in the game.
+        local fb = {}
+        local function link(top, bottom)
+            for k, v in pairs(top or {}) do
+                if type(v) == "table" and type(bottom) == "table" and type(bottom[k]) == "table"
+                    and type(v[1]) == "string" then
+                    fb[v] = bottom[k]
+                end
+            end
+        end
+        link(pack, base)
+        link(pack.narr, base.narr)
+        link(pack.narr and pack.narr.sleep, base.narr.sleep)
+        link(pack.win, base.win)
+        self._content, self._content_key, self._fallback = c, key, fb
     end
     return self._content
 end
 
--- One line from a list, dealt from a shuffled deck kept in the saved game so
--- the same line does not come back until the others have been used.
+-- Lines heard in earlier games, one history per theme and language.
+function WerewolfScreen:_seen()
+    local key = "narr_" .. self.theme .. "_" .. self.lang
+    if not self._seen_hist or self._seen_key ~= key then
+        self._seen_hist = SeenHistory.open(self.plugin, key, { max = 1500 })
+        self._seen_key = key
+    end
+    return self._seen_hist
+end
+
+-- One line from a list: not repeated within the game while another is left
+-- (the theme's lines, then the classic ones), and preferring the lines not
+-- heard in earlier games (see narration.lua).
 function WerewolfScreen:_pick(key, list)
     if type(list) ~= "table" then return list end
     if #list == 0 then return "" end
     local g = self.game
     if not g then return list[math.random(#list)] end
-    key = self.theme .. ":" .. key
     g.decks = g.decks or {}
-    local d = g.decks[key]
-    if not d or d.pos > #d.order or #d.order ~= #list then
-        local order = {}
-        for i = 1, #list do order[i] = i end
-        Game.shuffle(order, math.random)
-        d = { order = order, pos = 1 }
-        g.decks[key] = d
-    end
-    local idx = d.order[d.pos]
-    d.pos = d.pos + 1
-    return list[((idx - 1) % #list) + 1]
+    self:_c()
+    return Narration.pick(g.decks, self.theme .. ":" .. key, key, list,
+        self._fallback and self._fallback[list], self:_seen(), math.random)
 end
 
 function WerewolfScreen:_sleepLine(step)

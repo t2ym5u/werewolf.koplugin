@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0] - 2026-11-03
+
+### Added
+- Medieval, Space station and Pirate ship themes: 9 narration variants for
+  every night and day step (was 2 to 5), in French and English — 207
+  narration lines per theme and language instead of 76.
+
+### Changed
+- No narration line repeats within a game while another is left: once a
+  theme's own lines for a step have all been read, the classic village's
+  lines for that step are used before any repeat.
+- The lines already heard are remembered from one game to the next (one
+  memory per theme and language): a new game starts with the lines the
+  table hasn't heard yet.
+
 ## [1.0.2] - 2026-11-02
 
 ### Changed
