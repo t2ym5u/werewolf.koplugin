@@ -27,8 +27,8 @@ A village hides a few werewolves. Every night the werewolves devour a villager; 
 - **6–18 players**, suggested composition per table size, editable role by role
 - **Pass-the-reader secrecy**: neutral hand-over screen, role shown only after a tap, full e-ink refresh after every secret screen so no ghost can be read
 - **Narration in French and English**, several variants per step (over 300 lines per language), 40 funny death announcements
-- **Five narration themes**: Classic village, Famous village (every player also gets a famous alias, "Alice (alias Napoléon)", from 270+ names per language), Medieval, Space station and Pirate ship, each with its own narration and announcements
-- **Lots of narration**: 10 to 16 variants per night step, 80 night-death lines, 40 vote-out lines, 20 "nobody died" lines and 10+ lines for every other event, in English and French
+- **Five narration themes**: Classic village, Famous village (every player also gets a famous alias, "Alice (alias Napoléon)", from 270+ names per language), Medieval, Space station and Pirate ship, each with its own narration and announcements (the Medieval, Space and Pirate themes have 9 variants of every night and day step; once a theme's lines for a step have all been read in a game, the classic ones take over before anything repeats)
+- **Lots of narration**: 10 to 16 variants per night step, 80 night-death lines, 40 vote-out lines, 20 "nobody died" lines and 10+ lines for every other event, in English and French. The lines already heard are remembered from one game to the next (per theme and language), so a new game starts with the ones you haven't heard yet
 - **Settings**: content language, theme, mayor election (the mayor's vote counts double), reveal roles on death (yes/no), debate timer (off, 1–5 min)
 - **Save / restore**: the game is saved after every step; a resumed game never reopens on a secret screen
 - Interface follows KOReader's language (English, French, Spanish, German)

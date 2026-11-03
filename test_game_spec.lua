@@ -1,5 +1,5 @@
 -- busted specs for game.lua (pure logic) and the content files.
-package.path = "./?.lua;" .. package.path
+package.path = "./?.lua;./common/?.lua;" .. package.path
 local Game = dofile("game.lua")
 
 -- Build a game whose roles are fixed: roles[i] is player i's role.
@@ -338,7 +338,17 @@ describe("theme packs", function()
         for _, theme in ipairs({ "medieval", "space", "pirate" }) do
             it(theme .. " has its own narration and flavour in " .. lang, function()
                 local pk = dofile("pack_" .. theme .. "_" .. lang .. ".lua")
-                for _i, st in ipairs(STEPS) do assert.is_true(#pk.narr[st] >= 3, st) end
+                for _i, st in ipairs(STEPS) do assert.is_true(#pk.narr[st] >= 8, st) end
+                assert.is_true(#pk.narr.littlegirl >= 8)
+                local dup = {}
+                for k, l in pairs(pk.narr) do
+                    if type(l[1]) == "string" then
+                        for _j, line in ipairs(l) do
+                            assert.is_nil(dup[line], theme .. " " .. k .. " duplicate: " .. line)
+                            dup[line] = true
+                        end
+                    end
+                end
                 assert.is_true(#pk.night_deaths >= 20)
                 assert.is_true(#pk.vote_deaths >= 10)
                 assert.is_true(#pk.no_deaths >= 6)
@@ -584,5 +594,64 @@ describe("random games with every role", function()
             assert.is_true(g:isOver(), "game " .. round .. " did not end")
             assert.is_not_nil(g.winner)
         end
+    end)
+end)
+
+describe("narration picker", function()
+    local Narration = dofile("narration.lua")
+    local SeenHistory = require("seen_history")
+    local function fakePlugin()
+        local store = {}
+        return { getSetting = function(_, k, d) if store[k] == nil then return d end return store[k] end,
+                 saveSetting = function(_, k, v) store[k] = v end, store = store }
+    end
+    local base = dofile("content_fr.lua")
+
+    for _, theme in ipairs({ "medieval", "space", "pirate" }) do
+        it(theme .. ": the pack's lines, then the classic ones, before any repeat in a game", function()
+            local pk = dofile("pack_" .. theme .. "_fr.lua")
+            local own, classic = pk.narr.wolves, base.narr.wolves
+            local isOwn = {}
+            for _i, l in ipairs(own) do isOwn[l] = true end
+            local state, heard = {}, {}
+            for n = 1, #own + #classic do
+                local l = Narration.pick(state, theme .. ":wolves", "wolves", own, classic, nil, math.random)
+                assert.is_nil(heard[l], "repeated: " .. l)
+                heard[l] = true
+                if n <= #own then assert.is_true(isOwn[l]) else assert.is_nil(isOwn[l]) end
+            end
+            -- everything heard: a new cycle starts with the pack's lines
+            local l = Narration.pick(state, theme .. ":wolves", "wolves", own, classic, nil, math.random)
+            assert.is_true(isOwn[l])
+        end)
+    end
+
+    it("does not repeat a line in the next game while unheard ones are left", function()
+        local plugin = fakePlugin()
+        local pk = dofile("pack_pirate_en.lua")
+        local own, classic = pk.narr.seer, dofile("content_en.lua").narr.seer
+        local heard = {}
+        -- three games of three nights; history reopened from the settings each game
+        for _game = 1, 3 do
+            local seen = SeenHistory.open(plugin, "narr_pirate_en", { max = 1500 })
+            local state = {}
+            for _night = 1, 3 do
+                local l = Narration.pick(state, "pirate:seer", "seer", own, classic, seen, math.random)
+                assert.is_nil(heard[l], "heard in an earlier game: " .. l)
+                heard[l] = true
+            end
+        end
+        assert.is_table(plugin.store.seen_narr_pirate_en)
+    end)
+
+    it("upgrades an old { order, pos } deck and handles a classic theme", function()
+        local list = base.narr.seer
+        local state = { ["classic:seer"] = { order = { 1, 2 }, pos = 3 } }
+        local l = Narration.pick(state, "classic:seer", "seer", list, list, nil, math.random)
+        assert.is_string(l)
+        assert.is_table(state["classic:seer"].used)
+        for _i = 1, #list * 2 do Narration.pick(state, "classic:seer", "seer", list, nil, nil, math.random) end
+        assert.are.equal("x", Narration.pick({}, "k", "k", "x"))
+        assert.are.equal("", Narration.pick({}, "k", "k", {}))
     end)
 end)
