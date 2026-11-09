@@ -201,7 +201,7 @@ local WerewolfScreen = ScreenBase:extend{}
 
 function WerewolfScreen:init()
     local p = self.plugin
-    self.lang    = p:getSetting("lang", _.lang() == "fr" and "fr" or "en")
+    self.lang    = p:getLang({ "fr", "en" })
     self.names   = p:getSetting("names")
     self.theme   = p:getSetting("theme", "classic")
     self.reveal  = p:getSetting("reveal", true)
@@ -762,7 +762,7 @@ function WerewolfScreen:openLangMenu()
         parent = self,
         on_select = function(lang)
             self.lang = lang
-            self.plugin:saveSetting("lang", lang)
+            self.plugin:setLang(lang)
             self:_refresh()
         end,
     }
