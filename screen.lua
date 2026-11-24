@@ -607,7 +607,7 @@ function WerewolfScreen:_startTimer()
     if (self.ui.remaining or 0) <= 0 then return end
     self._tick_gen = (self._tick_gen or 0) + 1
     local gen = self._tick_gen
-    UIManager:scheduleIn(1, function() self:_onTick(gen) end)
+    self:schedule(1, function() self:_onTick(gen) end)
 end
 
 function WerewolfScreen:_stopTimer()
@@ -623,7 +623,7 @@ function WerewolfScreen:_onTick(gen)
         UIManager:setDirty(self, function() return "fast", box and box.dimen or self.dimen end)
     end
     if self.ui.remaining > 0 then
-        UIManager:scheduleIn(1, function() self:_onTick(gen) end)
+        self:schedule(1, function() self:_onTick(gen) end)
     end
 end
 
@@ -739,6 +739,7 @@ end
 
 function WerewolfScreen:onNewGame()
     local function reset()
+        self:cancelScheduled()
         self.game = nil
         self.plugin:saveState(nil)
         self:_go({ view = "setup" })
